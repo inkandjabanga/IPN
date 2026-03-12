@@ -64,7 +64,7 @@ IPN/
 
 ### 1. Clone or Download the Repository
 ```bash
-git clone <repository-url>
+git clone <https://github.com/inkandjabanga/IPN>
 cd IPN
 ```
 
@@ -73,20 +73,13 @@ cd IPN
 dotnet restore
 ```
 
-### 3. Update Connection String (Optional)
-The connection string is configured in both `appsettings.json` files:
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Data Source=.\\SQLEXPRESS01;Initial Catalog=IPN;TrustServerCertificate=True;Integrated Security=True"
-}
-```
 
-### 4. Build the Solution
+### 3. Build the Solution
 ```bash
 dotnet build
 ```
 
-### 5. Run the Application
+### 4. Run the Application
 
 **Terminal 1 - Start the API:**
 ```bash
@@ -103,10 +96,15 @@ dotnet run
 ```
 - Web Application: `http://localhost:5174`
 
-### 6. Access the Application
+### 5. Access the Application
 1. Open browser to `http://localhost:5174`
 2. Login with demo credentials (BON/BON)
 3. Make payments and view dashboard
+
+
+### Alternative IDEs to open the source code
+- **Visual Studio Code**
+- **Visual Studio**
 
 ## API Documentation
 
