@@ -1,0 +1,73 @@
+@model IPN.Web.Models.P2PPaymentResultViewModel
+
+@{
+    ViewData["Title"] = "Payment Result";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header @(Model.IsSuccess ? "bg-success" : "bg-danger") text-white text-center">
+                <h4 class="mb-0">
+                    <i class="bi @(Model.IsSuccess ? "bi-check-circle-fill" : "bi-x-circle-fill")"></i>
+                    @(Model.IsSuccess ? "Payment Successful" : "Payment Failed")
+                </h4>
+            </div>
+            <div class="card-body">
+                @if (Model.IsSuccess)
+                {
+                    <div class="text-center mb-4">
+                        <div class="display-1 text-success">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center mb-4">
+                        <div class="display-1 text-danger">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </div>
+                    </div>
+                }
+
+                <table class="table table-borderless">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted fw-bold">Status:</td>
+                            <td>
+                                <span class="badge @(Model.IsSuccess ? "bg-success" : "bg-danger")">
+                                    @Model.Status
+                                </span>
+                            </td>
+                        </tr>
+                        @if (!string.IsNullOrEmpty(Model.TransactionId))
+                        {
+                            <tr>
+                                <td class="text-muted fw-bold">Transaction ID:</td>
+                                <td class="font-monospace">@Model.TransactionId</td>
+                            </tr>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.ErrorCode))
+                        {
+                            <tr>
+                                <td class="text-muted fw-bold">Error Code:</td>
+                                <td class="font-monospace">@Model.ErrorCode</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td class="text-muted fw-bold">Message:</td>
+                            <td>@Model.Message</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="d-grid gap-2 mt-4">
+                    <a asp-action="Index" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Make Another Payment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

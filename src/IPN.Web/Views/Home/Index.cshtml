@@ -1,0 +1,628 @@
+@model IPN.Web.Models.P2PPaymentViewModel
+
+@{
+    ViewData["Title"] = "P2P Payment";
+}
+
+<style>
+    .form-control.is-valid {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        padding-right: calc(1.5em + 0.75rem);
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="row">
+        <div class="col-lg-6 order-1 order-lg-2 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-send"></i> Person-to-Person Payment</h4>
+                </div>
+                <div class="card-body">
+                    <div id="alertContainer"></div>
+
+                    <form id="paymentForm" class="needs-validation" novalidate>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="clientReference" class="form-label">Client Reference</label>
+                            <input type="text" id="clientReference" name="clientReference" class="form-control" 
+                                   value="@Model.ClientReference" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="currency" class="form-label">Currency</label>
+                            <input type="text" id="currency" name="currency" class="form-control" 
+                                   value="NAD" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="senderAccountNumber" class="form-label">Sender Account Number</label>
+                            <input type="text" id="senderAccountNumber" name="senderAccountNumber" 
+                                   class="form-control" 
+                                   placeholder="Enter sender account (10+ digits)" 
+                                   minlength="10"
+                                   required />
+                            <div class="invalid-feedback" id="senderError">Please enter a valid sender account number (minimum 10 digits).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="receiverAccountNumber" class="form-label">Receiver Account Number</label>
+                            <input type="text" id="receiverAccountNumber" name="receiverAccountNumber" 
+                                   class="form-control" 
+                                   placeholder="Enter receiver account (10+ digits)"
+                                   minlength="10"
+                                   required />
+                            <div class="invalid-feedback" id="receiverError">Please enter a valid receiver account number (minimum 10 digits).</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="amount" class="form-label">Amount (NAD)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">NAD</span>
+                                <input type="number" id="amount" name="amount" class="form-control" 
+                                       step="0.01" 
+                                       min="0.01"
+                                       placeholder="0.00" 
+                                       required />
+                                <div class="invalid-feedback">Please enter a valid amount greater than 0.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reference" class="form-label">Payment Reference</label>
+                            <input type="text" id="reference" name="reference" class="form-control" 
+                                   placeholder="Enter payment reference (max 50 chars)"
+                                   maxlength="50"
+                                   required />
+                            <div class="invalid-feedback">Please enter a valid payment reference.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" id="resetBtn" class="btn btn-outline-secondary">Reset</button>
+                        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+                            <span class="spinner-border spinner-border-sm me-2" role="status" style="display: none;"></span>
+                            <span id="btnText">Submit Payment</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title" id="confirmModalLabel">Confirm Payment</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to make this payment?</p>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-3 text-muted">Payment Summary</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td class="text-muted">Client Reference:</td>
+                                                <td class="fw-bold" id="summaryClientRef"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted">Sender Account:</td>
+                                                <td class="fw-bold" id="summarySender"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted">Receiver Account:</td>
+                                                <td class="fw-bold" id="summaryReceiver"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted">Amount:</td>
+                                                <td class="fw-bold text-success" id="summaryAmount"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted">Reference:</td>
+                                                <td class="fw-bold" id="summaryReference"></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Cancel</button>
+                                <button type="button" class="btn btn-primary" id="confirmPaymentBtn">Yes, Confirm Payment</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="resultSection" class="mt-4" style="display: none;">
+                    <hr />
+                    <div id="resultContent"></div>
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="button" id="newPaymentBtn" class="btn btn-primary">
+                            <i class="bi bi-arrow-left"></i> Make Another Payment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 order-2 order-lg-1 mb-4 mb-lg-0">
+        <div id="dashboardSection" class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="bi bi-grid"></i> Dashboard</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-title small">Total</h6>
+                                        <h4 class="mb-0" id="statTotal">0</h4>
+                                    </div>
+                                    <i class="bi bi-credit-card fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card bg-success text-white">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-title small">Success</h6>
+                                        <h4 class="mb-0" id="statSuccess">0</h4>
+                                    </div>
+                                    <i class="bi bi-check-circle fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-title small">Failed</h6>
+                                        <h4 class="mb-0" id="statFailed">0</h4>
+                                    </div>
+                                    <i class="bi bi-x-circle fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-title small">Total Amount</h6>
+                                        <h4 class="mb-0" id="statAmount">NAD 0</h4>
+                                    </div>
+                                    <i class="bi bi-currency-dollar fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="mb-2"><i class="bi bi-clock-history"></i> Payment History</h6>
+                <div class="card bg-light">
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-sm table-hover mb-0" id="historyTable" style="display: none;">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Ref</th>
+                                        <th>To</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="noHistory" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-1"></i>
+                            <p class="mt-2 small">No payments yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const API_URL = 'http://localhost:5057/api/p2p-payment';
+            
+            let paymentHistory = [];
+            let stats = { total: 0, success: 0, failed: 0, amount: 0 };
+
+            function updateDashboard() {
+                $('#statTotal').text(stats.total);
+                $('#statSuccess').text(stats.success);
+                $('#statFailed').text(stats.failed);
+                $('#statAmount').text('NAD ' + stats.amount.toFixed(2));
+                
+                const historyBody = $('#historyBody');
+                historyBody.empty();
+                
+                if (paymentHistory.length > 0) {
+                    $('#noHistory').hide();
+                    $('#historyTable').show();
+                    
+                    paymentHistory.forEach(payment => {
+                        const row = `
+                            <tr>
+                                <td>${payment.reference}</td>
+                                <td>${payment.receiver}</td>
+                                <td>NAD ${payment.amount.toFixed(2)}</td>
+                                <td>
+                                    <span class="badge ${payment.status === 'SUCCESS' ? 'bg-success' : 'bg-danger'}">
+                                        ${payment.status}
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                        historyBody.append(row);
+                    });
+                } else {
+                    $('#noHistory').show();
+                    $('#historyTable').hide();
+                }
+            }
+
+            function addToHistory(payment) {
+                paymentHistory.unshift(payment);
+                stats.total++;
+                if (payment.status === 'SUCCESS') {
+                    stats.success++;
+                    stats.amount += payment.amount;
+                } else {
+                    stats.failed++;
+                }
+                updateDashboard();
+            }
+
+            checkFormValidity();
+
+            function showAlert(message, type) {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>`;
+                $('#alertContainer').html(alertHtml);
+            }
+
+            function showResult(result) {
+                const isSuccess = result.status === 'SUCCESS';
+                
+                let content = '';
+                if (isSuccess) {
+                    content = `
+                        <div class="text-center mb-4">
+                            <div class="display-1 text-success">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <h4 class="text-success mt-2">Payment Successful</h4>
+                        </div>
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted fw-bold">Status:</td>
+                                    <td><span class="badge bg-success">${result.status}</span></td>
+                                </tr>
+                                ${result.transactionId ? `
+                                <tr>
+                                    <td class="text-muted fw-bold">Transaction ID:</td>
+                                    <td class="font-monospace">${result.transactionId}</td>
+                                </tr>
+                                ` : ''}
+                                <tr>
+                                    <td class="text-muted fw-bold">Message:</td>
+                                    <td>${result.message}</td>
+                                </tr>
+                            </tbody>
+                        </table>`;
+                } else {
+                    content = `
+                        <div class="text-center mb-4">
+                            <div class="display-1 text-danger">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </div>
+                            <h4 class="text-danger mt-2">Payment Failed</h4>
+                        </div>
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted fw-bold">Status:</td>
+                                    <td><span class="badge bg-danger">${result.status}</span></td>
+                                </tr>
+                                ${result.errorCode ? `
+                                <tr>
+                                    <td class="text-muted fw-bold">Error Code:</td>
+                                    <td class="font-monospace">${result.errorCode}</td>
+                                </tr>
+                                ` : ''}
+                                <tr>
+                                    <td class="text-muted fw-bold">Message:</td>
+                                    <td>${result.message}</td>
+                                </tr>
+                            </tbody>
+                        </table>`;
+                }
+
+                $('#resultContent').html(content);
+                $('#resultSection').show();
+                $('#paymentForm').hide();
+            }
+
+            function validateForm() {
+                const senderAccount = $('#senderAccountNumber');
+                const receiverAccount = $('#receiverAccountNumber');
+                const reference = $('#reference');
+                let isValid = true;
+
+                if (!/^\d+$/.test(senderAccount.val())) {
+                    senderAccount[0].setCustomValidity('invalid');
+                    isValid = false;
+                } else {
+                    senderAccount[0].setCustomValidity('');
+                }
+
+                if (!/^\d+$/.test(receiverAccount.val())) {
+                    receiverAccount[0].setCustomValidity('invalid');
+                    isValid = false;
+                } else {
+                    receiverAccount[0].setCustomValidity('');
+                }
+
+                if (senderAccount.val() && receiverAccount.val() && senderAccount.val() === receiverAccount.val()) {
+                    senderAccount[0].setCustomValidity('The sender and receiver Account numbers can not be the same.');
+                    receiverAccount[0].setCustomValidity('The sender and receiver Account numbers can not be the same.');
+                    isValid = false;
+                }
+
+                if (!reference.val() || reference.val()[0] === ' ') {
+                    reference[0].setCustomValidity('invalid');
+                    isValid = false;
+                } else {
+                    reference[0].setCustomValidity('');
+                }
+
+                const form = document.getElementById('paymentForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return false;
+                }
+                return isValid;
+            }
+
+            function checkFormValidity() {
+                const senderValue = $('#senderAccountNumber').val();
+                const receiverValue = $('#receiverAccountNumber').val();
+                const amountValue = $('#amount').val();
+                const referenceValue = $('#reference').val();
+                
+                const senderValid = senderValue && /^\d+$/.test(senderValue) && senderValue.length >= 10;
+                const receiverValid = receiverValue && /^\d+$/.test(receiverValue) && receiverValue.length >= 10;
+                const accountsNotSame = senderValue !== receiverValue;
+                const amountValid = amountValue && parseFloat(amountValue) > 0;
+                const referenceValid = referenceValue && referenceValue.length > 0 && referenceValue[0] !== ' ';
+                
+                if (senderValid && receiverValid && accountsNotSame && amountValid && referenceValid) {
+                    $('#submitBtn').prop('disabled', false);
+                } else {
+                    $('#submitBtn').prop('disabled', true);
+                }
+            }
+
+            $('#senderAccountNumber, #receiverAccountNumber').on('keyup', function() {
+                $('#paymentForm').removeClass('was-validated');
+                const senderAccount = $('#senderAccountNumber');
+                const receiverAccount = $('#receiverAccountNumber');
+                const senderValue = senderAccount.val();
+                const receiverValue = receiverAccount.val();
+                
+                const senderError = $('#senderError');
+                const receiverError = $('#receiverError');
+                
+                if (senderValue && receiverValue && senderValue === receiverValue) {
+                    senderAccount.addClass('is-invalid');
+                    receiverAccount.addClass('is-invalid');
+                    senderAccount.removeClass('is-valid');
+                    receiverAccount.removeClass('is-valid');
+                    senderError.text('The sender and receiver Account numbers can not be the same.');
+                    receiverError.text('The sender and receiver Account numbers can not be the same.');
+                } else {
+                    if (senderValue && !/^\d+$/.test(senderValue)) {
+                        senderAccount.addClass('is-invalid');
+                        senderAccount.removeClass('is-valid');
+                        senderError.text('Please enter a valid sender account number (minimum 10 digits). No letters are allowed.');
+                    } else if (senderValue && senderValue.length >= 10) {
+                        senderAccount.removeClass('is-invalid');
+                        senderAccount.addClass('is-valid');
+                    } else {
+                        senderAccount.removeClass('is-invalid');
+                        senderAccount.removeClass('is-valid');
+                    }
+                    
+                    if (receiverValue && !/^\d+$/.test(receiverValue)) {
+                        receiverAccount.addClass('is-invalid');
+                        receiverAccount.removeClass('is-valid');
+                        receiverError.text('Please enter a valid receiver account number (minimum 10 digits). No letters are allowed.');
+                    } else if (receiverValue && receiverValue.length >= 10) {
+                        receiverAccount.removeClass('is-invalid');
+                        receiverAccount.addClass('is-valid');
+                    } else {
+                        receiverAccount.removeClass('is-invalid');
+                        receiverAccount.removeClass('is-valid');
+                    }
+                }
+                checkFormValidity();
+            });
+
+            $('#reference').on('keyup', function() {
+                $('#paymentForm').removeClass('was-validated');
+                const field = $(this);
+                const value = field.val();
+                
+                if (value && value[0] === ' ') {
+                    field.addClass('is-invalid');
+                    field.removeClass('is-valid');
+                } else if (value && value.length > 0 && value.length <= 50) {
+                    field.removeClass('is-invalid');
+                    field.addClass('is-valid');
+                } else {
+                    field.removeClass('is-invalid');
+                    field.removeClass('is-valid');
+                }
+                checkFormValidity();
+            });
+
+            $('#amount').on('keyup', function() {
+                $('#paymentForm').removeClass('was-validated');
+                const field = $(this);
+                const value = parseFloat(field.val());
+                
+                if (field.val() && value > 0) {
+                    field.removeClass('is-invalid');
+                    field.addClass('is-valid');
+                } else {
+                    field.removeClass('is-valid');
+                    field.removeClass('is-invalid');
+                }
+                checkFormValidity();
+            });
+
+            $('#paymentForm').on('submit', function(e) {
+                e.preventDefault();
+                $('#alertContainer').html('');
+                
+                if (!validateForm()) {
+                    return;
+                }
+
+                $('#summaryClientRef').text($('#clientReference').val());
+                $('#summarySender').text($('#senderAccountNumber').val());
+                $('#summaryReceiver').text($('#receiverAccountNumber').val());
+                $('#summaryAmount').text('NAD ' + parseFloat($('#amount').val()).toFixed(2));
+                $('#summaryReference').text($('#reference').val());
+
+                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                modal.show();
+            });
+
+            $('#confirmPaymentBtn').on('click', function() {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+                modal.hide();
+
+                const submitBtn = $('#submitBtn');
+                const spinner = submitBtn.find('.spinner-border');
+                const btnText = $('#btnText');
+                
+                submitBtn.prop('disabled', true);
+                spinner.show();
+                btnText.text('Processing...');
+
+                const requestData = {
+                    clientReference: $('#clientReference').val(),
+                    senderAccountNumber: $('#senderAccountNumber').val(),
+                    receiverAccountNumber: $('#receiverAccountNumber').val(),
+                    amount: parseFloat($('#amount').val()),
+                    currency: $('#currency').val(),
+                    reference: $('#reference').val()
+                };
+
+                $.ajax({
+                    url: API_URL,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function(response) {
+                        showResult(response);
+                        addToHistory({
+                            dateTime: new Date().toLocaleString(),
+                            reference: requestData.clientReference,
+                            sender: requestData.senderAccountNumber,
+                            receiver: requestData.receiverAccountNumber,
+                            amount: requestData.amount,
+                            status: response.status,
+                            transactionId: response.transactionId
+                        });
+                    },
+                    error: function(xhr) {
+                        let errorResult = {
+                            status: 'FAILED',
+                            errorCode: null,
+                            transactionId: null,
+                            message: 'An unexpected error occurred'
+                        };
+
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.status) {
+                                errorResult = response;
+                            }
+                        } catch (e) {
+                            if (xhr.status === 0) {
+                                errorResult.message = 'Unable to connect to the API. Please ensure the API is running.';
+                            } else if (xhr.status === 400) {
+                                errorResult.errorCode = 'ERR001';
+                                errorResult.message = 'Missing required field';
+                            } else if (xhr.status === 402) {
+                                errorResult.errorCode = 'ERR005';
+                                errorResult.message = 'Insufficient funds';
+                            } else if (xhr.status === 500) {
+                                errorResult.errorCode = 'ERR006';
+                                errorResult.message = 'Internal processing error';
+                            }
+                        }
+
+                        showResult(errorResult);
+                        addToHistory({
+                            dateTime: new Date().toLocaleString(),
+                            reference: requestData.clientReference,
+                            sender: requestData.senderAccountNumber,
+                            receiver: requestData.receiverAccountNumber,
+                            amount: requestData.amount,
+                            status: errorResult.status,
+                            transactionId: errorResult.transactionId
+                        });
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false);
+                        spinner.hide();
+                        btnText.text('Submit Payment');
+                    }
+                });
+            });
+
+            $('#resetBtn').on('click', function() {
+                $('#paymentForm')[0].reset();
+                $('#paymentForm').removeClass('was-validated');
+                $('#resultSection').hide();
+                $('#paymentForm').show();
+                $('#alertContainer').html('');
+                
+                const newRef = 'REF-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + 
+                    Math.random().toString(36).substring(2, 8).toUpperCase();
+                $('#clientReference').val(newRef);
+            });
+
+            $('#newPaymentBtn').on('click', function() {
+                $('#resetBtn').click();
+            });
+        });
+    </script>
+}
