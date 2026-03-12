@@ -42,7 +42,7 @@ IPN/
 
 ### 1. Login Page (`/Home/Login`)
 - Entry point of the application
-- Requires username and password
+- Requires username and password (pre-populated)
 - Demo credentials: `BON` / `BON`
 
 ### 2. Payment Page (`/Home/Index`)
@@ -96,7 +96,7 @@ dotnet run
 ```
 - Web Application: `http://localhost:5174`
 
-### 5. Access the Application
+### 5. Access the web Application
 1. Open browser to `http://localhost:5174`
 2. Login with demo credentials (BON/BON)
 3. Make payments and view dashboard
