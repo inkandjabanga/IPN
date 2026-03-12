@@ -64,7 +64,7 @@ public class PaymentService : IPaymentService
             {
                 Status = "FAILED",
                 ErrorCode = "ERR006",
-                Message = "Failed to process payment"
+                Message = "Internal processing error"
             };
         }
         catch (TaskCanceledException)
@@ -74,7 +74,7 @@ public class PaymentService : IPaymentService
             {
                 Status = "FAILED",
                 ErrorCode = "ERR006",
-                Message = "Payment request timed out. Please try again."
+                Message = "Internal processing error."
             };
         }
         catch (HttpRequestException)
@@ -84,7 +84,7 @@ public class PaymentService : IPaymentService
             {
                 Status = "FAILED",
                 ErrorCode = "ERR006",
-                Message = "Unable to connect to payment service. Please try again."
+                Message = "Internal processing error."
             };
         }
         catch (Exception)
@@ -94,7 +94,7 @@ public class PaymentService : IPaymentService
             {
                 Status = "FAILED",
                 ErrorCode = "ERR006",
-                Message = "An unexpected error occurred. Please try again."
+                Message = "Internal processing error."
             };
         }
     }

@@ -149,6 +149,12 @@ dotnet run
 - **Service Layer**: `PaymentService` class handles all API communication
 - **JSON Communication**: Data is sent and received as JSON format
 
+
+### Updating the API endpoint URL in the web application
+- Change the value of the API port to your local maching in the file seating int this folder: src\IPN.Web\Services\PaymentService.cs
+
+
+
 ### Web Consuming API
 - **jQuery AJAX**: The web app uses jQuery's `$.ajax()` to POST payment requests to the API
 - **Asynchronous Calls**: API calls are made asynchronously without page reload
