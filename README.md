@@ -4,6 +4,8 @@
 
 This is a Person-to-Person (P2P) payment application built with .NET 9, featuring a RESTful API and a responsive web interface using HTML5, Bootstrap 5, and jQuery. The application demonstrates secure payment processing with comprehensive validation and security measures.
 
+The project features both a Web and Mobile Application. The mobile app source code and readme file are found in the IPN_Mobile folder.
+
 ## Project Structure
 
 ```
@@ -59,7 +61,7 @@ IPN/
 
 ### Prerequisites
 - .NET 9 SDK or later
-- SQL Server Express (optional - for database connection)
+- SQL Server Express (optional - for database connection), or supabase
 - A modern web browser
 
 ### 1. Clone or Download the Repository
@@ -87,7 +89,7 @@ cd src/IPN.Api
 dotnet run
 ```
 - API: `http://localhost:5057`
-- Swagger Documentation: `http://localhost:5057/swagger`
+- Swagger Documentation: `http://localhost:5057/swagger/index.html`
 
 **Terminal 2 - Start the Web App:**
 ```bash
@@ -97,6 +99,7 @@ dotnet run
 - Web Application: `http://localhost:5174`
 
 ### 5. Access the web Application
+First ensure that API is up and running (Accessible by the the web application)
 1. Open browser to `http://localhost:5174`
 2. Login with demo credentials (BON/BON)
 3. Make payments and view dashboard
